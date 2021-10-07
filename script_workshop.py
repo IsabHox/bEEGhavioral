@@ -68,3 +68,46 @@ errors=get_errors(eegdata_filtered, events,[1001,1002,1003],rejt)
 print('This participant committed {} errors'.format(np.sum(errors)))
 
 #%% itpc
+from utils import compute_witpc_from_phase
+
+freqs={'delta':[1,4],
+       'theta':[4,8],
+       'alpha':[8,12],
+       'beta':[12,25]}
+
+pows={}
+phases={}
+itc1={}
+itc2={}
+itc_all={}
+
+for f in freqs:
+    #first, filter raw data in relevant frequency band
+    temp_data=eegdata.copy()
+    temp_data.filter(freqs[f][0], freqs[f][1], fir_design='firwin')
+    #then, apply hilbert transform
+    temp_data.apply_hilbert()
+    #now, epoch data in the relevant period and extract data
+    ep=get_epochs(temp_data,events,tmin,tmax)
+    ep.drop(rejt)
+    my_data=ep.get_data()
+    
+    pows[f]=my_data.real**2+my_data.imag**2
+    phases[f]=np.arctan(my_data.imag/my_data.real)
+    itc1[f]=compute_witpc_from_phase(phases[f][labels==11,:,:],RT[labels==11])
+    itc2[f]=compute_witpc_from_phase(phases[f][labels==12,:,:],RT[labels==12])
+    itc_all[f]=compute_witpc_from_phase(phases[f],RT)
+    
+#%%
+for f in freqs:
+    plt.figure()
+    plt.pcolormesh(epochs.times,epochs.info['ch_names'],itc1[f])
+    plt.title('Visual, {}'.format(f))
+    plt.figure()
+    plt.pcolormesh(epochs.times,epochs.info['ch_names'],itc2[f])
+    plt.title('Auditory, {}'.format(f))
+    plt.figure()
+    plt.pcolormesh(epochs.times,epochs.info['ch_names'],itc_all[f])
+    plt.title('All conditions, {}'.format(f))
+    
+#%% great, just need the normalization step now!

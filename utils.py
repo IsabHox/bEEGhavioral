@@ -143,6 +143,17 @@ def get_errors(eegdata, stim_labels, resp_labels, rejected=[]):
     errors=(stimuli!=responses).astype(int)
     return errors
 
+#%% utility functions for the ITPC and wITPC
+def compute_itc_from_phase(phases):
+    n=np.shape(phases)[0]
+    itc=np.abs(np.sum(np.exp(1j*phases),axis=0)/n)
+    return itc
+
+def compute_witpc_from_phase(phases,weights):
+    n=np.shape(phases)[0]
+    witpc=np.abs(np.sum(np.multiply(weights[:, np.newaxis, np.newaxis],np.exp(1j*phases)),axis=0)/n)
+    return witpc
+
 #%% plotting functions
 def plot_ERP(epochs,events):
     for e in events:
