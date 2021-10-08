@@ -111,3 +111,26 @@ for f in freqs:
     plt.title('All conditions, {}'.format(f))
     
 #%% great, just need the normalization step now!
+permuted_itc1={}
+permuted_itc2={}
+permuted_itc_all={}
+
+niter=200
+RTcopy=RT.copy()
+RT1copy=RT[labels==11].copy()
+RT2copy=RT[labels==12].copy()
+
+for f in freqs:
+    perms=np.zeros((niter,clean_epochs.info['nchan'],len(clean_epochs.times)))
+    perms1=np.zeros((niter,clean_epochs.info['nchan'],len(clean_epochs.times)))
+    perms2=np.zeros((niter,clean_epochs.info['nchan'],len(clean_epochs.times)))
+    for n in range(niter):
+        np.random.shuffle(RTcopy)
+        np.random.shuffle(RT1copy)
+        np.random.shuffle(RT2copy)
+        perms[n,:,:]=compute_witpc_from_phase(phases[f],RTcopy)
+        perms1[n,:,:]=compute_witpc_from_phase(phases[f][labels==11,:,:],RT1copy)
+        perms2[n,:,:]=compute_witpc_from_phase(phases[f][labels==12,:,:],RT2copy)
+    permuted_itc_all[f]=perms
+    permuted_itc1[f]=perms1
+    permuted_itc2[f]=perms2
