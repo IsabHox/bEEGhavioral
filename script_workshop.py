@@ -11,7 +11,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 #%% load data (test which subject is best)
-subject='756'
+subject='722'
+subjects=['pilot3','136','358','916','347','766','661','959','205','400','756','897','420','804','207','196','295','722']
+
+
 datapath='D:\\PhD\\my_data\\{}\\{}_calib_000{}'.format(subject,subject,{})
 datapath_test='D:\\PhD\\my_data\\{}\\{}_test_000{}'.format(subject,subject,{})
 nblocks=4
@@ -21,7 +24,7 @@ eegdata.plot_sensors(show_names=True)
 
 #create and plot ERP
 events=[11,12]
-tmin=-1
+tmin=-0.5
 tmax=0.5
 
 #get epochs and plot ERP
@@ -68,7 +71,7 @@ errors=get_errors(eegdata_filtered, events,[1001,1002,1003],rejt)
 print('This participant committed {} errors'.format(np.sum(errors)))
 
 #%% itpc
-from utils import compute_witpc_from_phase
+from utils import compute_itc_from_phase, compute_witpc_from_phase
 
 freqs={'delta':[1,4],
        'theta':[4,8],
@@ -80,6 +83,9 @@ phases={}
 itc1={}
 itc2={}
 itc_all={}
+witc1={}
+witc2={}
+witc_all={}
 
 for f in freqs:
     #first, filter raw data in relevant frequency band
@@ -94,43 +100,49 @@ for f in freqs:
     
     pows[f]=my_data.real**2+my_data.imag**2
     phases[f]=np.arctan(my_data.imag/my_data.real)
-    itc1[f]=compute_witpc_from_phase(phases[f][labels==11,:,:],RT[labels==11])
-    itc2[f]=compute_witpc_from_phase(phases[f][labels==12,:,:],RT[labels==12])
-    itc_all[f]=compute_witpc_from_phase(phases[f],RT)
+    itc1[f]=compute_itc_from_phase(phases[f][labels==11,:,:])#,RT[labels==11])
+    itc2[f]=compute_itc_from_phase(phases[f][labels==12,:,:])#,RT[labels==12])
+    itc_all[f]=compute_itc_from_phase(phases[f])#,RT)
+    witc1[f]=compute_witpc_from_phase(phases[f][labels==11,:,:],RT[labels==11])
+    witc2[f]=compute_witpc_from_phase(phases[f][labels==12,:,:],RT[labels==12])
+    witc_all[f]=compute_witpc_from_phase(phases[f],RT)
     
 #%%
 for f in freqs:
     plt.figure()
     plt.pcolormesh(epochs.times,epochs.info['ch_names'],itc1[f])
-    plt.title('Visual, {}'.format(f))
+    plt.title('ITC, Visual, {}, participant {}'.format(f, subject))
+    plt.savefig('C:/Users/ihoxha/Desktop/PhD/Neurosceptic/presentations/figures/expe1/itc_poststim_{}_{}_visual'.format(f, subject), dpi=400)
     plt.figure()
     plt.pcolormesh(epochs.times,epochs.info['ch_names'],itc2[f])
-    plt.title('Auditory, {}'.format(f))
+    plt.title('ITC, Auditory, {}, participant {}'.format(f, subject))
+    plt.savefig('C:/Users/ihoxha/Desktop/PhD/Neurosceptic/presentations/figures/expe1/itc_poststim_{}_{}_audio'.format(f, subject), dpi=400)
     plt.figure()
     plt.pcolormesh(epochs.times,epochs.info['ch_names'],itc_all[f])
-    plt.title('All conditions, {}'.format(f))
-    
+    plt.title('ITC, All conditions, {}, participant {}'.format(f, subject))
+    plt.savefig('C:/Users/ihoxha/Desktop/PhD/Neurosceptic/presentations/figures/expe1/itc_poststim_{}_{}_all'.format(f, subject), dpi=400)
+
 #%% great, just need the normalization step now!
-permuted_itc1={}
-permuted_itc2={}
-permuted_itc_all={}
+# permuted_itc1={}
+# permuted_itc2={}
+# permuted_itc_all={}
 
-niter=200
-RTcopy=RT.copy()
-RT1copy=RT[labels==11].copy()
-RT2copy=RT[labels==12].copy()
+# niter=200
+# RTcopy=RT.copy()
+# RT1copy=RT[labels==11].copy()
+# RT2copy=RT[labels==12].copy()
 
-for f in freqs:
-    perms=np.zeros((niter,clean_epochs.info['nchan'],len(clean_epochs.times)))
-    perms1=np.zeros((niter,clean_epochs.info['nchan'],len(clean_epochs.times)))
-    perms2=np.zeros((niter,clean_epochs.info['nchan'],len(clean_epochs.times)))
-    for n in range(niter):
-        np.random.shuffle(RTcopy)
-        np.random.shuffle(RT1copy)
-        np.random.shuffle(RT2copy)
-        perms[n,:,:]=compute_witpc_from_phase(phases[f],RTcopy)
-        perms1[n,:,:]=compute_witpc_from_phase(phases[f][labels==11,:,:],RT1copy)
-        perms2[n,:,:]=compute_witpc_from_phase(phases[f][labels==12,:,:],RT2copy)
-    permuted_itc_all[f]=perms
-    permuted_itc1[f]=perms1
-    permuted_itc2[f]=perms2
+# for f in freqs:
+#     perms=np.zeros((niter,clean_epochs.info['nchan'],len(clean_epochs.times)))
+#     perms1=np.zeros((niter,clean_epochs.info['nchan'],len(clean_epochs.times)))
+#     perms2=np.zeros((niter,clean_epochs.info['nchan'],len(clean_epochs.times)))
+#     for n in range(niter):
+#         np.random.shuffle(RTcopy)
+#         np.random.shuffle(RT1copy)
+#         np.random.shuffle(RT2copy)
+#         perms[n,:,:]=compute_witpc_from_phase(phases[f],RTcopy)
+#         perms1[n,:,:]=compute_witpc_from_phase(phases[f][labels==11,:,:],RT1copy)
+#         perms2[n,:,:]=compute_witpc_from_phase(phases[f][labels==12,:,:],RT2copy)
+#     permuted_itc_all[f]=perms
+#     permuted_itc1[f]=perms1
+#     permuted_itc2[f]=perms2
